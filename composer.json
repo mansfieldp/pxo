@@ -1,0 +1,17 @@
+{
+  "name": "mansfieldp/pxo",
+  "description": "PHP package to provided bindings between PHP and XML based on annotating classes",
+  "type": "library",
+  "require": {
+    "sabre/xml": "^2.1",
+    "doctrine/annotations": "^1.6"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7"
+  },
+  "autoload": {
+    "psr-4": {
+      "PXO\\": "src\\"
+    }
+  }
+}
