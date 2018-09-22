@@ -29,6 +29,9 @@ abstract class Annotation implements AnnotationInterface {
         elseif ($value === FALSE) {
           $vars[] = sprintf('%s=FALSE', $name, $value);
         }
+        elseif ($value === '') {
+          //Don't include empty strings
+        }
         else {
           $vars[] = sprintf('%s="%s"', $name, $value);
         }
@@ -37,6 +40,6 @@ abstract class Annotation implements AnnotationInterface {
     if($vars) {
       return '@' . $class_name . '(' . implode(',', $vars) . ')';
     }
-    return '';
+    return '@' . $class_name ;
   }
 }
