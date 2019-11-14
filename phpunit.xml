@@ -33,6 +33,8 @@
     </filter>
     <logging>
         <log type="coverage-html" target="reports/coverage"/>
+        <log type="coverage-clover" target="reports/clover.xml"/>
+        <log type="junit" target="reports/junit.xml"/>
         <log type="testdox-html" target="reports/testdox.html"/>
     </logging>
 </phpunit>

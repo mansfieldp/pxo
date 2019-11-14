@@ -20,17 +20,14 @@ abstract class Annotation implements AnnotationInterface {
     foreach (get_class_vars($class) as $name => $var) {
       if (isset($this->$name)) {
         $value = $this->$name;
-        if ($value === $var) {
-          //If the value = default don't Set
+        if ($value === $var || $value === '') {
+          //If the value is the default or an empty string don't include
         }
         elseif ($value === TRUE) {
           $vars[] = sprintf('%s=TRUE', $name, $value);
         }
         elseif ($value === FALSE) {
           $vars[] = sprintf('%s=FALSE', $name, $value);
-        }
-        elseif ($value === '') {
-          //Don't include empty strings
         }
         else {
           $vars[] = sprintf('%s="%s"', $name, $value);

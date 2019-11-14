@@ -29,6 +29,7 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
     $this->serialize_Attributes($writer);
     $this->serialize_Elements($writer);
     $this->serialize_Text($writer);
+    $this->serialize_Xml($writer);
   }
 
   /**
@@ -50,7 +51,17 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
    * @param \Sabre\Xml\Writer $writer
    */
   public function serialize_Text(Writer $writer) {
-    foreach ($this->_text as $source => $annotation) {
+    foreach ($this->_text as $annotation) {
+      $value = $this->{$annotation->name};
+      $writer->writeRaw($value);
+    }
+  }
+
+  /**
+   * @param \Sabre\Xml\Writer $writer
+   */
+  public function serialize_Xml(Writer $writer) {
+    foreach ($this->_xml as $annotation) {
       $value = $this->{$annotation->name};
       $writer->writeRaw($value);
     }
@@ -66,11 +77,7 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
           $writer, $source, $this->{$annotation->name}, $annotation
         );
       }
-      else {
-        //        $this->writeElement(
-        //          $writer, $source, NULL, $annotation
-        //        );
-      }
+      //@TODO optionally retain empty elements?
     }
   }
 
@@ -98,7 +105,13 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
         $value = $this->serializeValue($e, $annotation);
         if (isset($annotation->attribute)) {
           $writer->write(
-            [$name => ['attributes' => [$annotation->attribute => $value]]]
+            [
+              $name => [
+                'attributes' => [
+                  $annotation->attribute => $value,
+                ],
+              ],
+            ]
           );
         }
         else {
@@ -110,7 +123,13 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
       $value = $this->serializeValue($element, $annotation);
       if (isset($value)) {
         $writer->write(
-          [$name => ['attributes' => [$annotation->attribute => $value]]]
+          [
+            $name => [
+              'attributes' => [
+                $annotation->attribute => $value,
+              ],
+            ],
+          ]
         );
       }
     }
@@ -131,8 +150,10 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
    */
   public function deserialize(Reader $reader, bool $next = TRUE) {
     $this->deserialize_Text($reader);
+    $this->deserialize_Xml($reader);
     $this->deserialize_Attributes($reader);
     $this->deserialize_Elements($reader);
+
     //Keep Going
     if ($next) {
       $reader->next();
@@ -149,6 +170,28 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
         $string = $reader->readString();
 
         $value = $this->deserializeValue($string, $text);
+
+        $value = preg_replace("#\s+#", ' ', $value);
+        $value = trim($value);
+
+        $this->$name = $value;
+      }
+    }
+  }
+
+  /**
+   * @param \Sabre\Xml\Reader $reader
+   */
+  public function deserialize_Xml(Reader $reader) {
+    //Deserialize Attributes
+    if (isset($this->_xml)) {
+      foreach ($this->_xml as $name => $text) {
+        $string = $reader->readInnerXml();
+        $value = $this->deserializeValue($string, $text);
+
+        $value = preg_replace("#\s+#", ' ', $value);
+        $value = trim($value);
+
         $this->$name = $value;
       }
     }
@@ -180,8 +223,9 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
         $annotation = $this->_elements[$element['name']];
         $property_name = $annotation->name;
         $value = $element['value'];
+
         if (isset($annotation->collapse)) {
-          foreach ($value as $k => $i_element) {
+          foreach ($value as $i_element) {
             $i_value = $this->deserializeValue(
               $i_element['value'], $annotation
             );
@@ -223,10 +267,11 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
    * @return mixed
    */
   public function deserializeValue($value, $annotation) {
-    if (isset($annotation->type) && !is_array($value)) {
-      if ($parser = $this->parser($annotation->type)) {
-        $value = $parser::deserialize($value);
-      }
+    if (isset($annotation->type)
+      && !is_array($value)
+      && $parser = $this->parser($annotation->type)
+    ) {
+      $value = $parser::deserialize($value);
     }
     return $value;
   }
@@ -242,10 +287,11 @@ abstract class ElementBase extends AnnotationBase implements ElementInterface {
    * @return mixed
    */
   private function serializeValue($value, $annotation) {
-    if (isset($annotation->type) && !is_array($value)) {
-      if ($parser = $this->parser($annotation->type)) {
-        $value = $parser::serialize($value);
-      }
+    if (isset($annotation->type)
+      && !is_array($value)
+      && $parser = $this->parser($annotation->type)
+    ) {
+      $value = $parser::serialize($value);
     }
     return $value;
   }

@@ -15,8 +15,7 @@ abstract class BaseParser implements BaseParserInterface {
    * @return mixed
    */
   public static function serialize($php_value) {
-    $xml_value = $php_value;
-    return $xml_value;
+    return (string)$php_value;
   }
 
   /**

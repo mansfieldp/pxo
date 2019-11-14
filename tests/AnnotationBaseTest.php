@@ -76,21 +76,22 @@ class AnnotationBaseTest extends TestCase {
     );
 
 
-
   }
 
-  public function testDebugInfoEmpty(){
+  public function testDebugInfoEmpty() {
     $class = new ParserAnnotationElement();
     $debug = $class->__debugInfo();
     $this->assertTrue(is_array($debug));
     $this->assertCount(0, $debug);
   }
-  public function testDebugInfoElement(){
+
+  public function testDebugInfoElement() {
     $class = new Element2();
     $debug = $class->__debugInfo();
     $this->assertTrue(is_array($debug));
     $this->assertCount(1, $debug);
-    $this->assertTrue(array_key_exists('element',$debug));
+    $this->assertTrue(array_key_exists('element', $debug));
+    $this->assertSame('Set', $debug['element']);
   }
 }
 
@@ -167,7 +168,12 @@ class Element2 extends AnnotationBase {
   /**
    * @Element(source="{http://example.com/Test}element")
    */
-  public $element;
+  public $element = 'Set';
+
+  /**
+   * @Element(source="{http://example.com/Test}element")
+   */
+  public $element2;
 }
 
 /**

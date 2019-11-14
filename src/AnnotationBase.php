@@ -62,6 +62,13 @@ abstract class AnnotationBase {
    */
   protected $_text = [];
 
+  /**
+   * Array of the contents of all Xml Annotations
+   *
+   * @var array
+   */
+  protected $_xml = [];
+
   private $_name;
 
   private $_namespace;
@@ -85,6 +92,7 @@ abstract class AnnotationBase {
     AnnotationRegistry::registerFile(__DIR__ . '/Annotation/Attribute.php');
     AnnotationRegistry::registerFile(__DIR__ . '/Annotation/Element.php');
     AnnotationRegistry::registerFile(__DIR__ . '/Annotation/Text.php');
+    AnnotationRegistry::registerFile(__DIR__ . '/Annotation/Xml.php');
     AnnotationRegistry::registerFile(__DIR__ . '/Annotation/Node.php');
     $reflection = new \ReflectionClass($this);
     $reader = new AnnotationReader();
@@ -147,15 +155,19 @@ abstract class AnnotationBase {
         elseif ($class == Annotation\Text::class) {
           $property_name = '_text';
         }
+        elseif ($class == Annotation\Xml::class) {
+          $property_name = '_xml';
+        }
 
         if ($property_name) {
           $annotation->name = $property->name;
           if (isset($annotation->source)) {
             $source = $annotation->source;
-            if ($property_name == '_elements') {
-              if ($this->_namespace && !preg_match('#{.*}.*#', $source)) {
-                $source = sprintf('{%s}%s', $this->_namespace, $source);
-              }
+            if ($property_name == '_elements'
+              && $this->_namespace
+              && !preg_match('#{.*}.*#', $source)
+            ) {
+              $source = sprintf('{%s}%s', $this->_namespace, $source);
             }
           }
           else {
@@ -184,7 +196,6 @@ abstract class AnnotationBase {
         $text
           = 'Trying to unset parser %s which is not set; while using Annotation';
         $message = sprintf($text, $annotation->type);
-        //        trigger_error(, E_USER_WARNING);
         throw new \Exception($message);
       }
     }
@@ -214,18 +225,28 @@ abstract class AnnotationBase {
   public function getAttributeAnnotations() {
     return $this->_attributes;
   }
+
   /**
    * @return array
    */
   public function getElementAnnotations() {
     return $this->_elements;
   }
+
   /**
    * @return array
    */
   public function getTextAnnotations() {
     return $this->_text;
   }
+
+  /**
+   * @return array
+   */
+  public function getXmlAnnotations() {
+    return $this->_xml;
+  }
+
   /**
    * @return string
    */
@@ -261,16 +282,24 @@ abstract class AnnotationBase {
   public function __debugInfo() {
     $reflection = new \ReflectionClass($this);
     $properties = [];
-    foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
-      $properties[$property->name] = $this->{$property->name};
+    foreach (
+      $reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property
+    ) {
+      if (!is_null($this->{$property->name})) {
+        $properties[$property->name] = $this->{$property->name};
+      }
     }
     return $properties;
   }
 
+  /**
+   * @param $type
+   *
+   * @return bool|\PXO\Parser\BaseParser
+   */
   public function parser($type) {
     if (array_key_exists($type, $this->parsers)) {
-      $parser = $this->parsers[$type];
-      return $parser;
+      return $this->parsers[$type];
     }
     else {
       return FALSE;
